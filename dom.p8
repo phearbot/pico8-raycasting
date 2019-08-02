@@ -132,7 +132,7 @@ function draw_raycast_3d()
 end
 
 function cast_single_ray(ray_ang, column)
- local ray_len = 60
+ local ray_len = 30
 	--local ray_ang = player.z -- this will change
  diff_x = ray_len * cos(ray_ang)
  diff_y = ray_len * sin(ray_ang)
