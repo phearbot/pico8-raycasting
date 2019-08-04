@@ -19,8 +19,9 @@ function _draw()
  draw_raycast_3d()
 	draw_map() 
  draw_player(true)
+ draw_hud()
  --draw_debug()
-	--draw_debug2()
+	draw_debug2()
 end
 
 function draw_debug()
@@ -36,7 +37,10 @@ function draw_debug()
 end
 
 function draw_debug2()
- 
+ print("cpu: " .. stat(0),3,2,11)
+ print("cpu: " .. stat(1),3,10,11)
+ print("mem: " .. stat(2),3,18,11)
+ print("fps: " .. stat(7),3,26,11)
 end
 
 function tan(x) return sin(x) / cos(x) end
@@ -49,7 +53,7 @@ end
 -- player stuff
 
 player = {x=64,y=64,z=1,fov=.25,view_dist=20}
-move_interval = 1 / 60 * 20
+move_interval = 1 / 60 * 10
 rotate_interval = 1 / 120
 
 function get_input()
@@ -83,14 +87,12 @@ function draw_player(cone)
 
  line(player.x,player.y,player.x + xd,player.y + yd,11)
 	circ(player.x,player.y,2,11)
-
---[[ this shit is broke yo
-	if cone then
-		local yd = player.view_dist * tan(player.z-(.5*player.fov)) 
-		line(player.x,player.y,player.x + player.view_dist,player.y + yd,12)
-	end
---]]--
 end
+
+function draw_hud()
+ 
+end
+
 -->8
 -- 2d map stuff
 
@@ -103,7 +105,7 @@ function build_map()
 	  	map_grid[x][y] = 1
 	  elseif (x==70 and (y > 20 and y < 100)) then
 	  	map_grid[x][y] = 1
-	  elseif (x==50 and (y > 20 and y < 100)) then
+	  elseif (x==60 and (y > 20 and y < 100)) then
 	  	map_grid[x][y] = 1  
 	  else
 	   map_grid[x][y] = 0
@@ -183,9 +185,9 @@ function cast_single_ray(ray_ang, column)
   -- col_height = lerp(128, 1, percent) 
  	
   -- color based on distance?
-  if ray_dist > 30 then
+  if ray_dist > 20 then
    col_color = 1
-  elseif ray_dist > 15 then
+  elseif ray_dist > 10 then
    col_color = 13
   else
    col_color = 14
