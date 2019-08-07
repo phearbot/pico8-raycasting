@@ -1,0 +1,14 @@
+{
+  "name": "dom",
+  "version": "1.0.0",
+  "description": "dom server, based on pico8com",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "phearbot",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^1.1.1"
+  }
+}
