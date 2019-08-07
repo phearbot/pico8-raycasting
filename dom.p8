@@ -16,7 +16,7 @@ end
 
 
 function _draw()
- cls(13)
+ cls()
 
  -- draw_raycast_3d()
 	-- draw_map() 

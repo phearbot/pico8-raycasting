@@ -7,5 +7,9 @@ scp dom.html p8server:/var/www/html/dom/.
 scp dom.js p8server:/var/www/html/dom/.
 scp server/server.js p8server:./pico8-server/.
 
+if [ "$1" == "-s" ]
+then
 echo ""
 ssh p8server ./pico8-server/bounce.sh
+fi
+
