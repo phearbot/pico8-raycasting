@@ -18,30 +18,33 @@ end
 function _draw()
  cls()
 
- -- draw_raycast_3d()
+ draw_raycast_3d()
 	-- draw_map() 
- draw_player(player.x,player.y,player.z,11)
- draw_other_players()
- -- draw_hud()
+ -- draw_player(player.x,player.y,player.z,11)
+ --draw_other_players()
+ --draw_hud()
  --draw_debug()
-	--draw_debug2()
- draw_debug3()
+	draw_debug2()
+ --draw_debug3()
 end
 
+
+debug_x_step = 0
+debug_y_step = 0
 function draw_debug()
 	print("x: " .. player.x,3,100,11)
 	print("y: " .. player.y,3,108,11)
 	print("z: " .. player.z,3,116,11)
-	print("diffx: " .. diff_x,3,10,11)	
-	print("diffy: " .. diff_y,3,18,11)
-	print("ray_x: " .. ray_x,3,26,11)
-	print("ray_y: " .. ray_y,3,34,11)
-	print("steps: " .. steps,3,42,11)
-	print("ray_dist: " .. ray_dist,3,50,11)
+	print("x_step: " .. debug_x_step,3,10,11)	
+	print("y_step: " .. debug_y_step,3,18,11)
+	print("map_x: " .. debug_map_x,3,26,11)
+	print("map_y: " .. debug_map_y,3,34,11)
+	--print("steps: " .. steps,3,42,11)
+	--print("ray_dist: " .. ray_dist,3,50,11)
 end
 
 function draw_debug2()
- print("cpu: " .. stat(0),3,2,11)
+ --print("cpu: " .. stat(0),3,2,11)
  print("cpu: " .. stat(1),3,10,11)
  print("mem: " .. stat(2),3,18,11)
  print("fps: " .. stat(7),3,26,11)
@@ -157,75 +160,110 @@ end
 
 
 function draw_raycast_3d()
+
+ -- cast_single_ray(player.z, col)
+
  for col=0,127 do
-  cast_single_ray((player.z + (player.fov/2)) - (col * (player.fov / 128)), col)
+  cast_single_ray( ((player.z + (player.fov/2)) - (col * (player.fov / 128))) % 1 , col)
  end
+ 
 end
 
+-- 
 function cast_single_ray(ray_ang, column)
- local ray_len = 30
-	--local ray_ang = player.z -- this will change
- diff_x = ray_len * cos(ray_ang)
- diff_y = ray_len * sin(ray_ang)
-	
-	--diff_x = abs(x2)
-	--diff_y = abs(y2)
-	
-	if abs(diff_x) > abs(diff_y) then
-		steps = abs(diff_x)
-	else
-		steps = abs(diff_y)
-	end
-	
-	-- calculate steps
-	step_x = diff_x / steps
-	step_y = diff_y / steps
-	
-	ray_x = player.x
-	ray_y = player.y
-	-- iterate over one ray
- hit = false
-	for i=0,steps do
-	 ray_x += step_x
-	 ray_y += step_y
-	 
-	 -- these breaks stop null ref exceptions?
-	 -- if (ray_x < 0 or ray_x > 127) break
-	 --	if (ray_y < 0 or ray_y > 127) break
-	 if map_grid[flr(ray_x)][flr(ray_y)] == 1 then
-   hit=true
-   break
+
+ -- all of this goodness is adapted from https://lodev.org/cgtutor/raycasting.html
+ -- map_[x|y] tracks the square the ray is in
+ local map_x = flr(player.x)
+ local map_y = flr(player.y)
+ -- step values track the direction the squares are moving
+ local x_step
+ local y_step
+ local side_dist_x
+ local side_dist_y
+
+ local cos_ray_ang = cos(ray_ang)
+ local sin_ray_ang = sin(ray_ang)
+
+ -- the '1' hard coded below is assuming a "step" on the grid is 1 unit
+ local delta_dist_x = abs(1 / cos_ray_ang)
+ local delta_dist_y = abs(1 / sin_ray_ang)
+
+
+
+ local hit = false
+ local side = 0 -- 0=east/west and 1=north/south
+
+ local perp_wall_dist
+
+
+ -- there may be an optimization opportunity in these angle checks
+ -- check if x and y needs to move in positive or negative direction
+ if (ray_ang >= -.25 and ray_ang <= .25) or (ray_ang >= .75) then
+  x_step = 1
+  side_dist_x = (map_x + 1 - player.x) * delta_dist_x
+ else
+  x_step = -1
+  side_dist_x = (player.x - map_x) * delta_dist_x
+ end
+
+ -- these y_step values feel backwards but it's because the grid is a q4 grid (pico8 starts graphics top left, so i drew the grid that way)
+ if (ray_ang < .5 and ray_ang > 0) then
+  y_step = -1
+  side_dist_y = (map_y + 1 - player.y) * delta_dist_y
+ else
+  y_step = 1
+  side_dist_y = (player.y - map_y) * delta_dist_y
+ end
+
+
+ while (not hit) do
+  if (side_dist_x < side_dist_y) then -- if hit is on an east/west wall
+   side_dist_x += delta_dist_x
+   map_x += x_step
+   side = 0
+  else -- if hit is on an north/south wall
+   side_dist_y += delta_dist_y
+   map_y += y_step
+   side = 1
   end
-	end
-	
- if hit then 
- 	-- calculate distance
- 	new_diff_x = player.x - ray_x
- 	new_diff_y = player.y - ray_y
- 	ray_dist = cos(player.z - ray_ang) * sqrt((new_diff_x*new_diff_x) + (new_diff_y*new_diff_y))
- 	
-  col_height = (200 / ray_dist)
 
-  -- this will draw the ray being cast
- 	--line(player.x,player.y,ray_x,ray_y,12)
+  -- exit condition is hitting a wall (goes infinitely basically)
+  if (map_grid[map_x][map_y] > 0) hit=true
+ 
+ end
 
- 	-- calculate column height
-  -- percent = ray_dist / (ray_len * cos(player.z - ray_ang))
-  -- col_height = lerp(128, 1, percent) 
- 	
-  -- color based on distance?
-  if ray_dist > 20 then
+ -- this may be the wrong distance = fisheye effect
+ if (side == 0) then
+  perp_wall_dist = (map_x - player.x + ((1 - x_step) / 2)) / cos_ray_ang * cos(player.z - ray_ang)
+  -- perp_wall_dist = (map_x - player.x) / cos_ray_ang
+ else
+  perp_wall_dist = (map_y - player.y + ((1 - y_step) / 2)) / sin_ray_ang * cos(player.z - ray_ang)
+  -- perp_wall_dist = (map_y - player.y) / sin_ray_ang
+ end
+
+  if perp_wall_dist > 20 then
    col_color = 1
-  elseif ray_dist > 10 then
+  elseif perp_wall_dist > 10 then
    col_color = 13
   else
    col_color = 14
   end
 
- 	-- draw the column
-  line(column,64 - (col_height / 2),column,64 + (col_height / 2),col_color)
-	end
+ local col_height = flr(200/perp_wall_dist)
+ line(column,64 - (col_height / 2),column,64 + (col_height / 2),col_color)
+
+ -- this will draw the ray being cast
+ -- line(player.x,player.y,map_x,map_y,8)
+
+ -- debug
+ debug_x_step = x_step
+ debug_y_step = y_step
+ debug_map_x = map_x
+ debug_map_y = map_y
 end
+
+
 -->8
 -- netcode stuff
 push_data_size = 16 --everything after this is data we read from gpio 
@@ -316,6 +354,10 @@ function draw_other_players()
  for i=1,#other_players do
    draw_player(other_players[i].x,other_players[i].y,other_players[i].z,8)
  end
+end
+
+function draw_other_player_3d()
+ 
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
