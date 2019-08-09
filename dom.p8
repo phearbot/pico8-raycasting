@@ -16,7 +16,7 @@ end
 
 
 function _draw()
- cls()
+ cls(5) -- this color is the color of the ground
 
  draw_raycast_3d()
 	-- draw_map() 
@@ -161,8 +161,10 @@ end
 
 function draw_raycast_3d()
 
+ -- draw sky
+ rectfill(0,0,127,63,0)
+ 
  -- cast_single_ray(player.z, col)
-
  for col=0,127 do
   cast_single_ray( ((player.z + (player.fov/2)) - (col * (player.fov / 128))) % 1 , col)
  end
@@ -235,11 +237,11 @@ function cast_single_ray(ray_ang, column)
 
  -- this may be the wrong distance = fisheye effect
  if (side == 0) then
-  perp_wall_dist = (map_x - player.x + ((1 - x_step) / 2)) / cos_ray_ang * cos(player.z - ray_ang)
-  -- perp_wall_dist = (map_x - player.x) / cos_ray_ang
+  -- perp_wall_dist = (map_x - player.x + ((1 - x_step) / 2)) / cos_ray_ang * cos(player.z - ray_ang)
+  perp_wall_dist = (map_x - player.x) / cos_ray_ang * cos(player.z - ray_ang)
  else
-  perp_wall_dist = (map_y - player.y + ((1 - y_step) / 2)) / sin_ray_ang * cos(player.z - ray_ang)
-  -- perp_wall_dist = (map_y - player.y) / sin_ray_ang
+  -- perp_wall_dist = (map_y - player.y + ((1 - y_step) / 2)) / sin_ray_ang * cos(player.z - ray_ang)
+  perp_wall_dist = (map_y - player.y) / sin_ray_ang * cos(player.z - ray_ang)
  end
 
   if perp_wall_dist > 20 then
@@ -250,7 +252,7 @@ function cast_single_ray(ray_ang, column)
    col_color = 14
   end
 
- local col_height = flr(200/perp_wall_dist)
+ local col_height = flr(150/perp_wall_dist)
  line(column,64 - (col_height / 2),column,64 + (col_height / 2),col_color)
 
  -- this will draw the ray being cast
@@ -356,7 +358,7 @@ function draw_other_players()
  end
 end
 
-function draw_other_player_3d()
+function draw_other_players_3d()
  
 end
 __gfx__
