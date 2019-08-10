@@ -19,7 +19,7 @@ function _draw()
  cls(5) -- this color is the color of the ground
 
  draw_raycast_3d()
-	-- draw_map() 
+	draw_map() 
  -- draw_player(player.x,player.y,player.z,11)
  --draw_other_players()
  --draw_hud()
@@ -256,7 +256,7 @@ function cast_single_ray(ray_ang, column)
  line(column,64 - (col_height / 2),column,64 + (col_height / 2),col_color)
 
  -- this will draw the ray being cast
- -- line(player.x,player.y,map_x,map_y,8)
+ line(player.x,player.y,map_x,map_y,8)
 
  -- debug
  debug_x_step = x_step
