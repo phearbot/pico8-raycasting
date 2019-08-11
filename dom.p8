@@ -16,14 +16,13 @@ end
 
 
 function _draw()
- cls(5) -- this color is the color of the ground
+ cls(6) -- this color is the color of the ground
 
- a_new_hope()
- -- draw_raycast_3d()
-	draw_map() 
- draw_player(player.x,player.y,player.z,11)
+ draw_raycast_3d()
+	-- draw_map() 
+ -- draw_player(player.x,player.y,player.z,11)
  --draw_other_players()
- --draw_hud()
+ draw_hud()
  --draw_debug()
 	draw_debug2()
  --draw_debug3()
@@ -78,17 +77,14 @@ end
 
 function tan(x) return sin(x) / cos(x) end
 
--- https://github.com/nangidev/pico-8-projects/blob/master/tech/lerp.p8
-function lerp(tar,pos,perc)
- return (1-perc)*tar + perc*pos;
-end
 -->8
 -- player stuff
 
 player = {x=64,y=64,z=0,view_dist=20}
 fov=90
-wall_scale = 128
-fovsize=-sin((fov/2)/360)
+fov_size=-sin((fov/2)/360)
+wall_scale = 164
+hud_height = 20
 
 move_interval = 1 / 60 * 10
 rotate_interval = 1 / 120
@@ -127,7 +123,7 @@ function draw_player(x,y,z,_color)
 end
 
 function draw_hud()
- 
+ rectfill(0,127 - hud_height,127,127,5)
 end
 
 -->8
@@ -164,24 +160,14 @@ end
 -- raycasting stuff
 
 
+
+
 function draw_raycast_3d()
-
- -- draw sky
- rectfill(0,0,127,63,0)
- 
- -- cast_single_ray(player.z, col)
- for col=0,127 do
-  cast_single_ray( ((player.z + (player.fov/2)) - (col * (player.fov / 128))) % 1 , col)
- end
- 
-end
-
-function a_new_hope()
  -- consider moving some of these variables to the player and only calculate on rotation?
  local dir_x=cos(player.z) 
  local dir_y=sin(player.z)
- local plane_x = cos(player.z + 0.25) * fovsize
- local plane_y = sin(player.z + 0.25) * fovsize
+ local plane_x = cos(player.z + 0.25) * fov_size
+ local plane_y = sin(player.z + 0.25) * fov_size
 
  for column=0,127 do -- 127 because lua includes the last number
   local camera_x = 2 * column / 128 - 1
@@ -190,6 +176,8 @@ function a_new_hope()
 
   map_x = flr(player.x)
   map_y = flr(player.y)
+
+
 
   -- i don't like this and i think i'm going to change it (borrowed from wolfenstein.p8)
   rds=ray_dir_x*ray_dir_x
@@ -228,12 +216,12 @@ function a_new_hope()
     side_dist_x += delta_dist_x
     map_x += x_step
     side = 0
-    col_color = 7
+    col_color = 13
    else
     side_dist_y += delta_dist_y
     map_y += y_step
     side = 1
-    col_color = 6
+    col_color = 1
    end
 
    if (map_grid[map_x][map_y] == 1) then
@@ -249,120 +237,12 @@ function a_new_hope()
 
   -- draw the damn thing or whatever
   col_height = flr(flr(wall_scale / perp_wall_dist) / 2)
-  line(127 - column,64 - (col_height / 2),127 - column,64 + (col_height / 2),col_color)
-  line(player.x, player.y, map_x, map_y, 8)
+  line(127 - column,(128 - hud_height) / 2 - (col_height / 2),127 - column,(128 - hud_height) / 2 + (col_height / 2),col_color)
+  -- line(player.x, player.y, map_x, map_y, 8)
 
  end
 end
 
--- 
-function cast_single_ray(ray_ang, column)
-
- -- all of this goodness is adapted from https://lodev.org/cgtutor/raycasting.html
- -- map_[x|y] tracks the square the ray is in
- local map_x = flr(player.x)
- local map_y = flr(player.y)
- -- step values track the direction the squares are moving
- local x_step
- local y_step
- local side_dist_x
- local side_dist_y
-
- local cos_ray_ang = cos(ray_ang)
- local sin_ray_ang = sin(ray_ang)
-
- -- these are really duplicates of above, but for my sanity in debugging here they are
-  dir_x=cos(ray_ang)
-  dir_y=sin(ray_ang)
-
- -- the '1' hard coded below is assuming a "step" on the grid is 1 unit
- local delta_dist_x = abs(1 / cos_ray_ang)
- local delta_dist_y = abs(1 / sin_ray_ang)
-
-
-
- local hit = false
- local side = 0 -- 0=east/west and 1=north/south
-
- local perp_wall_dist
-
-
- -- there may be an optimization opportunity in these angle checks
- -- check if x and y needs to move in positive or negative direction
- --if (ray_ang >= -.25 and ray_ang <= .25) or (ray_ang >= .75) then
- if (dir_x > 0) then
-  x_step = 1
-  side_dist_x = (map_x + 1 - player.x) * delta_dist_x
- else
-  x_step = -1
-  side_dist_x = (player.x - map_x) * delta_dist_x
- end
-
- -- these y_step values feel backwards but it's because the grid is a q4 grid (pico8 starts graphics top left, so i drew the grid that way)
- --if (ray_ang < .5 and ray_ang > 0) then
- if (dir_y > 0) then
-  y_step = -1
-  side_dist_y = (map_y + 1 - player.y) * delta_dist_y
- else
-  y_step = 1
-  side_dist_y = (player.y - map_y) * delta_dist_y
- end
-
-
- while (not hit) do
-  if (side_dist_x < side_dist_y) then -- if hit is on an east/west wall
-   side_dist_x += delta_dist_x
-   map_x += x_step
-   side = 0
-  else -- if hit is on an north/south wall
-   side_dist_y += delta_dist_y
-   map_y += y_step
-   side = 1
-  end
-
-  -- exit condition is hitting a wall (goes infinitely basically)
-  if (map_grid[map_x][map_y] > 0) hit=true
- 
- end
-
- -- this may be the wrong distance = fisheye effect
- if (side == 0) then
-  perp_wall_dist = (map_x - player.x + (1 - x_step) / 2) / dir_x
-  -- perp_wall_dist = (map_x - player.x + ((1 - x_step) / 2)) / cos_ray_ang * cos(player.z - ray_ang)
-  -- perp_wall_dist = (map_x - player.x) / cos_ray_ang * cos(player.z - ray_ang)
- else
-  perp_wall_dist = (map_y - player.y + (1 - y_step) / 2) / dir_y
-  -- perp_wall_dist = (map_y - player.y + ((1 - y_step) / 2)) / sin_ray_ang * cos(player.z - ray_ang)
-  -- perp_wall_dist = (map_y - player.y) / sin_ray_ang * cos(player.z - ray_ang)
- end
-
-  if perp_wall_dist > 20 then
-   col_color = 1
-  elseif perp_wall_dist > 10 then
-   col_color = 13
-  else
-   col_color = 14
-  end
-
- local col_height = flr(150/perp_wall_dist)
- line(column,64 - (col_height / 2),column,64 + (col_height / 2),col_color)
-
- local culur
- if (map_x == 60 or map_x == 70) then
-  culur = 12
- else
-  culur = 8
- end
-
- -- this will draw the ray being cast
- -- line(player.x,player.y,map_x,map_y,culur)
-
- -- debug
- debug_x_step = x_step
- debug_y_step = y_step
- debug_map_x = map_x
- debug_map_y = map_y
-end
 
 
 -->8
