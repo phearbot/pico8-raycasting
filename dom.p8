@@ -16,11 +16,11 @@ end
 
 
 function _draw()
- cls(6) -- this color is the color of the ground
+ cls(5) -- this color is the color of the ground
 
  draw_raycast_3d()
-	-- draw_map() 
- -- draw_player(player.x,player.y,player.z,11)
+	--draw_map() 
+ --draw_player(player.x,player.y,player.z,11)
  --draw_other_players()
  draw_hud()
  --draw_debug()
@@ -53,9 +53,9 @@ function draw_debug2()
  print("y: " .. player.y,3,78,11)
  print("z: " .. player.z,3,86,11)
 
- print("gpiox: " .. peek4(0x5f80),3,100,11)
- print("gpioy: " .. peek4(0x5f84),3,108,11)
- print("gpioz: " .. peek4(0x5f88),3,116,11)
+ --print("gpiox: " .. peek4(0x5f80),3,100,11)
+ --print("gpioy: " .. peek4(0x5f84),3,108,11)
+ --print("gpioz: " .. peek4(0x5f88),3,116,11)
 end
 
 debug_add_player = 0
@@ -80,13 +80,13 @@ function tan(x) return sin(x) / cos(x) end
 -->8
 -- player stuff
 
-player = {x=64,y=64,z=0,view_dist=20}
+player = {x=64,y=64,z=0}
 fov=90
 fov_size=-sin((fov/2)/360)
 wall_scale = 164
 hud_height = 20
 
-move_interval = 1 / 60 * 10
+move_interval = 1 / 60 * 5
 rotate_interval = 1 / 120
 
 function get_input()
@@ -124,7 +124,7 @@ end
 
 function draw_hud()
  -- hud box
- rectfill(0,127 - hud_height,127,127,5)
+ rectfill(0,127 - hud_height,127,127,0)
 
  -- portrait
  rectfill(55,127-hud_height+1,72,126,6)
@@ -141,10 +141,14 @@ function build_map()
 	 for y=0, 127 do
 	  if (x==0 or y == 0 or x==127 or y==127) then
 	  	map_grid[x][y] = 1
-	  elseif (x==70 and (y > 20 and y < 100)) then
+	  elseif (x==70 and (y>20 and y<100)) then
 	  	map_grid[x][y] = 1
-	  elseif (x==60 and (y > 20 and y < 100)) then
-	  	map_grid[x][y] = 1  
+	  elseif (x==60 and (y>20 and y<100)) then
+	  	map_grid[x][y] = 1 
+   elseif (y==70 and (x>50 and x< 68)) then
+    map_grid[x][y] = 1
+   elseif (y==60 and (x>62 and x<80)) then
+    map_grid[x][y] = 1
 	  else
 	   map_grid[x][y] = 0
 	 	end
@@ -168,6 +172,9 @@ end
 
 
 function draw_raycast_3d()
+ -- draws the sky
+ rectfill(0,0,127,(128 - hud_height) / 2,6)
+
  -- consider moving some of these variables to the player and only calculate on rotation?
  local dir_x=cos(player.z) 
  local dir_y=sin(player.z)
@@ -179,24 +186,11 @@ function draw_raycast_3d()
   local ray_dir_x = dir_x + plane_x * camera_x
   local ray_dir_y = dir_y + plane_y * camera_x
 
-  map_x = flr(player.x)
-  map_y = flr(player.y)
+  local map_x = flr(player.x)
+  local map_y = flr(player.y)
+  local delta_dist_x = abs(1 / ray_dir_x)
+  local  delta_dist_y = abs(1 / ray_dir_y)
 
-
-
-  -- i don't like this and i think i'm going to change it (borrowed from wolfenstein.p8)
-  rds=ray_dir_x*ray_dir_x
-  if(rds>0.0001)then
-   delta_dist_x=sqrt(1+(ray_dir_y*ray_dir_y)/rds)
-  else
-   delta_dist_x=1000
-  end
-  rds=ray_dir_y*ray_dir_y
-  if(rds>0.0001)then
-   delta_dist_y=sqrt(1+(ray_dir_x*ray_dir_x)/rds)
-  else
-   delta_dist_y=1000
-  end
 
 
   if (ray_dir_x > 0) then
