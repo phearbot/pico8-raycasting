@@ -184,7 +184,7 @@ function a_new_hope()
  local plane_y = sin(player.z + 0.25) * fovsize
 
  for column=0,127 do -- 127 because lua includes the last number
-  local camera_x = 2 * column / 127
+  local camera_x = 2 * column / 128 - 1
   local ray_dir_x = dir_x + plane_x * camera_x
   local ray_dir_y = dir_y + plane_y * camera_x
 
