@@ -83,10 +83,10 @@ function tan(x) return sin(x) / cos(x) end
 player = {x=64,y=64,z=0}
 fov=90
 fov_size=-sin((fov/2)/360)
-wall_scale = 164
+wall_scale = 128 -- the lower the wall_scale the "larger" the room appears to be, but each unit of wall is now longer
 hud_height = 20
 
-move_interval = 1 / 60 * 5
+move_interval = 1 / 60 * 3
 rotate_interval = 1 / 120
 
 function get_input()
@@ -154,6 +154,13 @@ function build_map()
 	 	end
 	 end
 	end
+
+ map_grid[63][65] = 1
+ map_grid[65][65] = 1
+ map_grid[67][65] = 1
+ map_grid[65][63] = 1
+ map_grid[65][67] = 1
+
 end
 
 function draw_map()
@@ -181,6 +188,7 @@ function draw_raycast_3d()
  local plane_x = cos(player.z + 0.25) * fov_size
  local plane_y = sin(player.z + 0.25) * fov_size
 
+ -- this is the loop that iterates over the columns to draw one per column
  for column=0,127 do -- 127 because lua includes the last number
   local camera_x = 2 * column / 128 - 1
   local ray_dir_x = dir_x + plane_x * camera_x
@@ -209,8 +217,10 @@ function draw_raycast_3d()
    side_dist_y = (player.y - map_y) * delta_dist_y
   end
 
+  -- the loop that each ray runs in until it hits something
   hit = false
   while (not hit) do
+   -- this figures out if the next hit is a horizontal or vertical wall. https://lodev.org/cgtutor/images/raycastdelta.gif
    if (side_dist_x < side_dist_y) then 
     side_dist_x += delta_dist_x
     map_x += x_step
@@ -223,6 +233,7 @@ function draw_raycast_3d()
     col_color = 1
    end
 
+   -- check for a hit and calculate perpendicular wall distance
    if (map_grid[map_x][map_y] == 1) then
     if (side == 0) then
      perp_wall_dist = (map_x - player.x + (1 - x_step)/2) / ray_dir_x

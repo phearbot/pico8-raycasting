@@ -1,4 +1,4 @@
 builds/*
-dom.html
-dom.js
+dom*.html
+dom*.js
 server/node_modules/
